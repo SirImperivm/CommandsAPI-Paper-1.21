@@ -13,9 +13,8 @@ import me.sirimperivm.commandsAPI.command.Argument;
 import me.sirimperivm.commandsAPI.command.CommandEntity;
 import me.sirimperivm.commandsAPI.command.SubCommand;
 import me.sirimperivm.commandsAPI.command.exception.CommandException;
+import me.sirimperivm.commandsAPI.command.exception.CommandExceptionHandler;
 import me.sirimperivm.commandsAPI.command.model.ExecutorType;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
@@ -28,9 +27,15 @@ public class CommandRegistry {
 
     private final Plugin plugin;
     private final List<CommandEntity> pendingCommands = new ArrayList<>();
+    private CommandExceptionHandler exceptionHandler;
 
     public CommandRegistry(Plugin plugin) {
         this.plugin = plugin;
+    }
+
+    public CommandRegistry setExceptionHandler(CommandExceptionHandler handler) {
+        this.exceptionHandler = handler;
+        return this;
     }
 
     public void register(CommandEntity command) {
@@ -158,25 +163,25 @@ public class CommandRegistry {
         CommandSender sender = ctx.getSource().getSender();
         ExecutorType executorType = subCommand != null ? subCommand.getExecutorType() : command.getExecutorType();
 
-        String permission = subCommand != null && subCommand.hasPermission()
-                ? subCommand.getPermission()
-                : command.getPermission();
-
-        if (permission != null && !permission.isEmpty() && !sender.hasPermission(permission)) {
-            throw new CommandException("sender.no-permission");
-        }
-
-        checkExecutorType(sender, executorType);
-
-        Map<String, Argument> targetArgs = subCommand != null ? subCommand.getArguments() : command.getArguments();
-        for (Map.Entry<String, Object> entry : parsedArgs.entrySet()) {
-            Argument arg = targetArgs.get(entry.getKey());
-            if (arg != null) {
-                arg.setValue(entry.getValue());
-            }
-        }
-
         try {
+            String permission = subCommand != null && subCommand.hasPermission()
+                    ? subCommand.getPermission()
+                    : command.getPermission();
+
+            if (permission != null && !permission.isEmpty() && !sender.hasPermission(permission)) {
+                throw new CommandException("sender.no-permission").with("permission", permission);
+            }
+
+            checkExecutorType(sender, executorType);
+
+            Map<String, Argument> targetArgs = subCommand != null ? subCommand.getArguments() : command.getArguments();
+            for (Map.Entry<String, Object> entry : parsedArgs.entrySet()) {
+                Argument arg = targetArgs.get(entry.getKey());
+                if (arg != null) {
+                    arg.setValue(entry.getValue());
+                }
+            }
+
             if (subCommand != null) {
                 subCommand.setExecutionContext(sender, new String[0]);
                 subCommand.run();
@@ -185,6 +190,13 @@ public class CommandRegistry {
                 command.run();
             }
             return 1;
+        } catch (CommandException e) {
+            if (exceptionHandler != null) {
+                exceptionHandler.handle(sender, e);
+            } else {
+                plugin.getLogger().warning("[CommandException] " + e.getErrorId());
+            }
+            return 0;
         } catch (Exception e) {
             plugin.getLogger().severe("Command execution error: " + e.getMessage());
             e.printStackTrace();
