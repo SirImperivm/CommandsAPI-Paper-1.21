@@ -256,13 +256,14 @@ Arguments define the parameters that commands and subcommands accept.
 
 #### ArgType Enum
 
-| Type      | Description    | Getter Method    |
-|-----------|----------------|------------------|
-| `STRING`  | Text value     | `getAsString()`  |
-| `INTEGER` | 32-bit integer | `getAsInt()`     |
-| `LONG`    | 64-bit integer | `getAsLong()`    |
-| `DOUBLE`  | Decimal number | `getAsDouble()`  |
-| `BOOLEAN` | true/false     | `getAsBoolean()` |
+| Type      | Description                                      | Getter Method    |
+|-----------|--------------------------------------------------|------------------|
+| `STRING`  | Text value                                       | `getAsString()`  |
+| `INTEGER` | 32-bit integer                                   | `getAsInt()`     |
+| `LONG`    | 64-bit integer                                   | `getAsLong()`    |
+| `DOUBLE`  | Decimal number                                   | `getAsDouble()`  |
+| `BOOLEAN` | true/false                                       | `getAsBoolean()` |
+| `PLAYER`  | Online player name with tab-completion support   | `getAsPlayer()`  |
 
 #### Examples
 ```java

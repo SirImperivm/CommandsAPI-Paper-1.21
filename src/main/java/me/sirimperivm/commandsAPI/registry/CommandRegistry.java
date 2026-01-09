@@ -4,6 +4,8 @@ import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
@@ -15,12 +17,14 @@ import me.sirimperivm.commandsAPI.command.SubCommand;
 import me.sirimperivm.commandsAPI.command.exception.CommandException;
 import me.sirimperivm.commandsAPI.command.exception.CommandExceptionHandler;
 import me.sirimperivm.commandsAPI.command.model.ExecutorType;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The CommandRegistry class is responsible for registering and managing commands for a given plugin.
@@ -194,6 +198,20 @@ public class CommandRegistry {
             }
             case BOOLEAN -> RequiredArgumentBuilder.argument(arg.getName(),
                     BoolArgumentType.bool());
+            case PLAYER -> {
+                RequiredArgumentBuilder<CommandSourceStack, String> playerArg =
+                        RequiredArgumentBuilder.argument(arg.getName(), StringArgumentType.word());
+                playerArg.suggests((context, builder) -> {
+                    String remaining = builder.getRemaining().toLowerCase();
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        if (player.getName().toLowerCase().startsWith(remaining)) {
+                            builder.suggest(player.getName());
+                        }
+                    }
+                    return builder.buildFuture();
+                });
+                yield playerArg;
+            }
             default -> {
                 if (arg.isGreedy()) {
                     yield RequiredArgumentBuilder.argument(arg.getName(), StringArgumentType.greedyString());
@@ -202,6 +220,30 @@ public class CommandRegistry {
                 }
             }
         };
+    }
+
+    /**
+     * Suggests online player names based on the input provided by the user.
+     * This method uses the remaining input in the suggestions builder to filter
+     * online players whose names start with the given input.
+     *
+     * @param context the command context containing relevant information about the command execution environment
+     * @param builder the suggestions builder that accumulates the filtered player names
+     * @return a CompletableFuture that, when completed, contains the suggestions for online players
+     */
+    private CompletableFuture<Suggestions> suggestOnlinePlayers(
+            CommandContext<?> context,
+            SuggestionsBuilder builder
+    ) {
+        String remaining = builder.getRemaining().toLowerCase();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getName().toLowerCase().startsWith(remaining)) {
+                builder.suggest(player.getName());
+            }
+        }
+
+        return builder.buildFuture();
     }
 
     /**
@@ -230,6 +272,7 @@ public class CommandRegistry {
                     case LONG -> LongArgumentType.getLong(ctx, arg.getName());
                     case DOUBLE -> DoubleArgumentType.getDouble(ctx, arg.getName());
                     case BOOLEAN -> BoolArgumentType.getBool(ctx, arg.getName());
+                    case PLAYER -> StringArgumentType.getString(ctx, arg.getName());
                     default -> StringArgumentType.getString(ctx, arg.getName());
                 };
                 result.put(arg.getName().toLowerCase(), value);

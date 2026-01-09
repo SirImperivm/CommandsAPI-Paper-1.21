@@ -3,6 +3,8 @@ package me.sirimperivm.commandsAPI.command;
 import lombok.Getter;
 import lombok.Setter;
 import me.sirimperivm.commandsAPI.command.model.ArgType;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 /**
  * Represents a command-line or data-processing argument with metadata such as type,
@@ -115,6 +117,17 @@ public class Argument {
      */
     public Boolean getAsBoolean() {
         return value instanceof Boolean ? (Boolean) value : null;
+    }
+
+    /**
+     * Converts the stored value to a Player object using Bukkit's {@code getPlayerExact} method.
+     * If the value is null, this method returns null.
+     *
+     * @return the Player object corresponding to the stored value, or null if the value is null
+     */
+    public Player getAsPlayer() {
+        if (value == null) return null;
+        return Bukkit.getPlayerExact(value.toString());
     }
 
     /**

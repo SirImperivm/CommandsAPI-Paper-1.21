@@ -11,6 +11,7 @@ package me.sirimperivm.commandsAPI.command.model;
  * - LONG: Represents a 64-bit signed integer.
  * - DOUBLE: Represents a floating-point value.
  * - BOOLEAN: Represents a true or false value.
+ * - PLAYER: Represents an online player name with tab-completion support.
  */
 public enum ArgType {
 
@@ -19,4 +20,5 @@ public enum ArgType {
     LONG,
     DOUBLE,
     BOOLEAN,
+    PLAYER,
 }
