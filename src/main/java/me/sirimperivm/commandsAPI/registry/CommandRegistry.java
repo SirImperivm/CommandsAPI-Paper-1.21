@@ -223,30 +223,6 @@ public class CommandRegistry {
     }
 
     /**
-     * Suggests online player names based on the input provided by the user.
-     * This method uses the remaining input in the suggestions builder to filter
-     * online players whose names start with the given input.
-     *
-     * @param context the command context containing relevant information about the command execution environment
-     * @param builder the suggestions builder that accumulates the filtered player names
-     * @return a CompletableFuture that, when completed, contains the suggestions for online players
-     */
-    private CompletableFuture<Suggestions> suggestOnlinePlayers(
-            CommandContext<?> context,
-            SuggestionsBuilder builder
-    ) {
-        String remaining = builder.getRemaining().toLowerCase();
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.getName().toLowerCase().startsWith(remaining)) {
-                builder.suggest(player.getName());
-            }
-        }
-
-        return builder.buildFuture();
-    }
-
-    /**
      * Extracts and converts the arguments provided in the {@code CommandContext} into a map
      * of argument names and their corresponding values. The types of the arguments are determined
      * dynamically based on the argument definitions of the given command or subcommand.
